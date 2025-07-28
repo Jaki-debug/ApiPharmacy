@@ -45,11 +45,14 @@ public interface ProduitRepository extends JpaRepository<Produit, Long> {
     );
     
     List<Produit> findByCategorie(Categorie categorie);
+    List<Produit> findByCategorieId(Long categorieId);
+
     
     
     long countByStockLessThan(int stock);
     long countByDateExpirationBefore(LocalDate date);
     long count();
     long countByDateExpirationBetween(LocalDate startDate, LocalDate endDate);
+    boolean existsByCategorie_Id(Long categorieId);
 
 }

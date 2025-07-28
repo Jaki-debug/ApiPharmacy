@@ -1,7 +1,7 @@
 package com.pharmacie.pharmacie.controller;
 
 import com.pharmacie.pharmacie.model.Categorie;
-import com.pharmacie.pharmacie.service.ProduitService;
+import com.pharmacie.pharmacie.service.CategorieService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,66 +15,54 @@ import java.util.List;
 public class CategorieController {
 
     @Autowired
-    private ProduitService produitService;
+    private CategorieService categorieService;
 
     // Récupérer toutes les catégories
     @GetMapping
     public ResponseEntity<List<Categorie>> getAllCategories() {
-        List<Categorie> categories = produitService.getAllCategories();
+        List<Categorie> categories = categorieService.getAllCategories();
         return new ResponseEntity<>(categories, HttpStatus.OK);
     }
 
     // Récupérer une catégorie par ID
     @GetMapping("/{id}")
     public ResponseEntity<Categorie> getCategorieById(@PathVariable Long id) {
-        Categorie categorie = produitService.getAllCategories().stream()
-                .filter(c -> c.getId().equals(id))
-                .findFirst()
-                .orElse(null);
-
-        if (categorie == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(categorie, HttpStatus.OK);
+        return categorieService.getCategorieById(id)
+                .map(categorie -> new ResponseEntity<>(categorie, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     // Créer une nouvelle catégorie
     @PostMapping
     public ResponseEntity<Categorie> createCategorie(@RequestBody Categorie categorie) {
-        Categorie savedCategorie = produitService.saveCategorie(categorie);
+        Categorie savedCategorie = categorieService.saveCategorie(categorie);
         return new ResponseEntity<>(savedCategorie, HttpStatus.CREATED);
     }
 
     // Mettre à jour une catégorie existante
     @PutMapping("/{id}")
     public ResponseEntity<Categorie> updateCategorie(@PathVariable Long id, @RequestBody Categorie categorie) {
-        Categorie existingCategorie = produitService.getAllCategories().stream()
-                .filter(c -> c.getId().equals(id))
-                .findFirst()
-                .orElse(null);
-
-        if (existingCategorie == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        existingCategorie.setNom(categorie.getNom());  // Mise à jour des attributs
-        Categorie updatedCategorie = produitService.saveCategorie(existingCategorie);
-        return new ResponseEntity<>(updatedCategorie, HttpStatus.OK);
+        return categorieService.getCategorieById(id)
+                .map(existingCategorie -> {
+                    existingCategorie.setNom(categorie.getNom());
+                    Categorie updatedCategorie = categorieService.saveCategorie(existingCategorie);
+                    return new ResponseEntity<>(updatedCategorie, HttpStatus.OK);
+                })
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // Supprimer une catégorie
+    // Supprimer une catégorie avec gestion de la règle métier
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategorie(@PathVariable Long id) {
-        Categorie categorie = produitService.getAllCategories().stream()
-                .filter(c -> c.getId().equals(id))
-                .findFirst()
-                .orElse(null);
-
-        if (categorie == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public ResponseEntity<String> deleteCategorie(@PathVariable Long id) {
+        try {
+            categorieService.deleteCategorie(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (IllegalStateException e) {
+            // Par exemple, si la catégorie contient encore des produits
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+        } catch (RuntimeException e) {
+            // Catégorie non trouvée
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
-
-        produitService.deleteCategorie(id);  // Suppression de la catégorie
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

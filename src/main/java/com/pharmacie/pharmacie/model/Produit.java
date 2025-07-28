@@ -1,8 +1,8 @@
 package com.pharmacie.pharmacie.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
@@ -12,6 +12,10 @@ import java.util.List;
 
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIdentityInfo(
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id"
+)
 public class Produit {
 
     @Id
@@ -24,8 +28,10 @@ public class Produit {
 
     @ManyToOne
     @JoinColumn(name = "categorie_id", referencedColumnName = "id")
-    @JsonBackReference // Pour éviter les boucles infinies lors de la sérialisation JSON
     private Categorie categorie;
+
+    @Column(name = "prixAchat")
+    private BigDecimal prixAchat;
 
     @NotNull
     @Column(name = "prixUnitaire")
@@ -41,24 +47,27 @@ public class Produit {
     @Column(name = "description")
     private String description;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "produit", cascade = CascadeType.ALL)
     private List<MouvementStock> mouvements;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "produit", cascade = CascadeType.ALL)
     private List<LigneCommande> lignesCommande;
 
     @Column(name = "imagePath", nullable = true)
     private String imagePath;
 
+    // 🔄 Relation ManyToMany avec Pharmacie
+    @ManyToMany(mappedBy = "produits")
+    private List<Pharmacie> pharmacies;
+
     // Constructeurs
     public Produit() {}
 
-    public Produit(String nom, Categorie categorie, @NotNull BigDecimal prixUnitaire, Integer stock,
+    public Produit(String nom, Categorie categorie, BigDecimal prixAchat, @NotNull BigDecimal prixUnitaire, Integer stock,
                    LocalDate dateExpiration, String description, String imagePath) {
         this.nom = nom;
         this.categorie = categorie;
+        this.prixAchat = prixAchat;
         this.prixUnitaire = prixUnitaire;
         this.stock = stock;
         this.dateExpiration = dateExpiration;
@@ -75,6 +84,9 @@ public class Produit {
 
     public Categorie getCategorie() { return categorie; }
     public void setCategorie(Categorie categorie) { this.categorie = categorie; }
+
+    public BigDecimal getPrixAchat() { return prixAchat; }
+    public void setPrixAchat(BigDecimal prixAchat) { this.prixAchat = prixAchat; }
 
     public BigDecimal getPrixUnitaire() { return prixUnitaire; }
     public void setPrixUnitaire(BigDecimal prixUnitaire) { this.prixUnitaire = prixUnitaire; }
@@ -96,4 +108,7 @@ public class Produit {
 
     public List<LigneCommande> getLignesCommande() { return lignesCommande; }
     public void setLignesCommande(List<LigneCommande> lignesCommande) { this.lignesCommande = lignesCommande; }
+
+    public List<Pharmacie> getPharmacies() { return pharmacies; }
+    public void setPharmacies(List<Pharmacie> pharmacies) { this.pharmacies = pharmacies; }
 }

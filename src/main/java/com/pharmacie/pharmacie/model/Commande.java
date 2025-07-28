@@ -1,8 +1,8 @@
 package com.pharmacie.pharmacie.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,6 +11,10 @@ import java.util.List;
 
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIdentityInfo(
+  generator = ObjectIdGenerators.PropertyGenerator.class,
+  property = "id"
+)
 public class Commande {
 
     @Id
@@ -21,12 +25,10 @@ public class Commande {
     private ModeCommande modeCommande;
 
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
     private List<LigneCommande> lignesCommande = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "utilisateur_id")
-    @JsonBackReference
     private Utilisateur utilisateur;
 
     @ManyToOne
@@ -42,6 +44,12 @@ public class Commande {
 
     @Column(nullable = false)
     private LocalDateTime dateCommande = LocalDateTime.now();
+
+    @Column(name = "reference", unique = true)
+    private String reference;
+
+    @Column(name = "statut_paiement")
+    private String statutPaiement;
 
     // Constructeur par défaut
     public Commande() {
@@ -59,7 +67,18 @@ public class Commande {
         ligneCommande.setCommande(null);
     }
 
-    // Getters et Setters
+    // --- NOUVELLE METHODE POUR LE TOTAL ---
+    public BigDecimal getTotalCommande() {
+        if (lignesCommande == null || lignesCommande.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return lignesCommande.stream()
+            .map(ligne -> ligne.getPrixUnitaire().multiply(BigDecimal.valueOf(ligne.getQuantite())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Getters et Setters habituels
+
     public Long getId() {
         return id;
     }
@@ -124,17 +143,19 @@ public class Commande {
         this.dateCommande = dateCommande;
     }
 
-    // Calcul du total de la commande
-    public BigDecimal calculerTotal() {
-        if (lignesCommande == null || lignesCommande.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-        return lignesCommande.stream()
-                .map(LigneCommande::getTotalLigne)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    public String getReference() {
+        return reference;
     }
 
-    public BigDecimal getTotalCommande() {
-        return calculerTotal();
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    public String getStatutPaiement() {
+        return statutPaiement;
+    }
+
+    public void setStatutPaiement(String statutPaiement) {
+        this.statutPaiement = statutPaiement;
     }
 }

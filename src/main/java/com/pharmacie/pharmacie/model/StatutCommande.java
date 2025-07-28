@@ -2,7 +2,7 @@ package com.pharmacie.pharmacie.model;
 
 public enum StatutCommande {
     EN_ATTENTE,
-    REÇUE,
+    RECUE,
     CONFIRMEE,
     REJETEE,
     EN_COURS,

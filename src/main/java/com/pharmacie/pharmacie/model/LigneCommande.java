@@ -1,7 +1,8 @@
 package com.pharmacie.pharmacie.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 
 @Entity
@@ -11,56 +12,35 @@ public class LigneCommande {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Association à la commande (Evite la récursion infinie avec la commande)
-    @ManyToOne
-    @JoinColumn(name = "commande_id", nullable = false)  // Ajout de 'nullable = false' pour forcer l'association
-    @JsonBackReference // Évite la récursion infinie avec Commande
-    private Commande commande;
-
-    // Association au produit (Evite la récursion infinie avec Produit)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER) // Important : charge le produit avec la ligne
     @JoinColumn(name = "produit_id")
-    @JsonBackReference // Évite la récursion infinie avec Produit
     private Produit produit;
 
+    @ManyToOne
+    @JoinColumn(name = "commande_id")
+    @JsonIgnore // Évite les boucles infinies
+    private Commande commande;
+
     private BigDecimal prixUnitaire;
-    private Integer quantite;
 
-    // Constructeur par défaut requis par Hibernate
-    public LigneCommande() {
-    }
+    private int quantite;
 
-    // Constructeur avec Produit, Quantité et Commande
-    public LigneCommande(Produit produit, Integer quantite, Commande commande) {
+    // Constructeurs
+    public LigneCommande() {}
+
+    public LigneCommande(Produit produit, BigDecimal prixUnitaire, int quantite) {
         this.produit = produit;
+        this.prixUnitaire = prixUnitaire;
         this.quantite = quantite;
-        this.prixUnitaire = produit.getPrixUnitaire();
-        this.commande = commande;  // Associé à la commande
     }
 
-    // Méthode pour calculer le total de la ligne de commande
-    public BigDecimal getTotalLigne() {
-        if (prixUnitaire != null && quantite != null) {
-            return prixUnitaire.multiply(BigDecimal.valueOf(quantite));
-        }
-        return BigDecimal.ZERO;
-    }
-
-    // Getters et setters
+    // Getters et Setters
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Commande getCommande() {
-        return commande;
-    }
-
-    public void setCommande(Commande commande) {
-        this.commande = commande;
     }
 
     public Produit getProduit() {
@@ -71,6 +51,14 @@ public class LigneCommande {
         this.produit = produit;
     }
 
+    public Commande getCommande() {
+        return commande;
+    }
+
+    public void setCommande(Commande commande) {
+        this.commande = commande;
+    }
+
     public BigDecimal getPrixUnitaire() {
         return prixUnitaire;
     }
@@ -79,11 +67,16 @@ public class LigneCommande {
         this.prixUnitaire = prixUnitaire;
     }
 
-    public Integer getQuantite() {
+    public int getQuantite() {
         return quantite;
     }
 
-    public void setQuantite(Integer quantite) {
+    public void setQuantite(int quantite) {
         this.quantite = quantite;
+    }
+
+    // Calcul du total pour une ligne
+    public BigDecimal getTotalLigne() {
+        return prixUnitaire.multiply(BigDecimal.valueOf(quantite));
     }
 }

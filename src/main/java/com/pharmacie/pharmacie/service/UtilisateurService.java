@@ -2,10 +2,8 @@ package com.pharmacie.pharmacie.service;
 
 import com.pharmacie.pharmacie.model.Utilisateur;
 import com.pharmacie.pharmacie.repository.UtilisateurRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.pharmacie.pharmacie.service.UtilisateurService;  // Assurez-vous que l'importation est correcte
 
 import java.util.List;
 import java.util.Optional;
@@ -20,8 +18,12 @@ public class UtilisateurService {
         this.utilisateurRepository = utilisateurRepository;
     }
 
-    // Cré utilisateur, avec hachage du mot de passe
-    public Utilisateur creerUtilisateur(Utilisateur utilisateur) {
+    // Création utilisateur, avec hachage du mot de passe
+    public Utilisateur registerUser(Utilisateur utilisateur) {
+        // S'assurer que le rôle n'est pas null ou vide
+        if (utilisateur.getRole() == null || utilisateur.getRole().isEmpty()) {
+            utilisateur.setRole("user"); // rôle par défaut
+        }
         utilisateur.setMotDePasse(passwordEncoder.encode(utilisateur.getMotDePasse()));
         return utilisateurRepository.save(utilisateur);
     }
@@ -62,7 +64,7 @@ public class UtilisateurService {
         return false;
     }
 
-    // Méthode pour trouver un utilisateur par ID
+    // Trouver un utilisateur par ID
     public Utilisateur findUtilisateurById(Integer id) {
         return utilisateurRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));

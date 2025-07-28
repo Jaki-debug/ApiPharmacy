@@ -16,5 +16,6 @@ public interface LigneCommandeRepository extends JpaRepository<LigneCommande, Lo
             "FROM LigneCommande lc JOIN lc.produit p " +
             "WHERE lc.commande.id = :commandeId")
      List<Object[]> findProduitsByCommandeId(@Param("commandeId") Long commandeId);
+     
 
 }

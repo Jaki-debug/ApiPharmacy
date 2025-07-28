@@ -28,6 +28,22 @@ import java.util.Map;
 import java.util.HashMap;
 
 
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.file.*;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.pharmacie.pharmacie.model.Categorie;
+import com.pharmacie.pharmacie.model.Produit;
+import com.pharmacie.pharmacie.repository.CategorieRepository;
+import com.pharmacie.pharmacie.repository.ProduitRepository;
 @Service
 public class ProduitService {
 
@@ -36,75 +52,85 @@ public class ProduitService {
 
     @Autowired
     private CategorieRepository categorieRepository;
-    
-    
-    
 
-    // Dossier où les images seront stockées
     private static final String IMAGE_DIRECTORY = "uploads/";
 
-    // Ajouter un produit avec une image
+    // ✅ Ajouter un produit avec image et calcul automatique du prix de vente
     public Produit addProduit(Produit produit, MultipartFile imageFile) throws IOException {
         if (imageFile != null && !imageFile.isEmpty()) {
-            // Sauvegarder l'image et obtenir son chemin
             String imagePath = saveImage(imageFile);
-            produit.setImagePath(imagePath); // Ajouter le chemin de l'image au produit
+            produit.setImagePath(imagePath);
         }
-        return produitRepository.save(produit); // Sauvegarder le produit dans la base de données
+
+        calculerPrixUnitaireSiVide(produit);
+        return produitRepository.save(produit);
     }
 
-    // Rendre la méthode saveImage publique pour la rendre accessible dans le contrôleur
-    public String saveImage(MultipartFile imageFile) throws IOException {
-        String uploadDir = "uploads/";
-        Path uploadPath = Paths.get(uploadDir);
+    // ✅ Mettre à jour un produit avec calcul si prix manquant
+    public Produit updateProduit(Long id, Produit produit) {
+        produit.setId(id);
+        calculerPrixUnitaireSiVide(produit);
+        return produitRepository.save(produit);
+    }
 
-        // Vérifie si le dossier existe, sinon le créer
+    // ✅ Calcul automatique du prix si vide (prixAchat + marge%)
+    private void calculerPrixUnitaireSiVide(Produit produit) {
+        if ((produit.getPrixUnitaire() == null || produit.getPrixUnitaire().compareTo(BigDecimal.ZERO) == 0)
+                && produit.getPrixAchat() != null
+                && produit.getCategorie() != null
+                && produit.getCategorie().getId() != null) {
+
+            // Récupérer la catégorie complète depuis la base
+            Optional<Categorie> optionalCategorie = categorieRepository.findById(produit.getCategorie().getId());
+            if (optionalCategorie.isPresent()) {
+                Categorie categorie = optionalCategorie.get();
+                produit.setCategorie(categorie); // Assigner la vraie catégorie
+
+                if (categorie.getMargePourcentage() != null) {
+                    BigDecimal marge = produit.getPrixAchat()
+                            .multiply(categorie.getMargePourcentage())
+                            .divide(BigDecimal.valueOf(100));
+                    produit.setPrixUnitaire(produit.getPrixAchat().add(marge));
+                }
+            }
+        }
+    }
+
+    // ✅ Sauvegarder l'image sur le serveur
+    public String saveImage(MultipartFile imageFile) throws IOException {
+        Path uploadPath = Paths.get(IMAGE_DIRECTORY);
         if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath); // Création du dossier
+            Files.createDirectories(uploadPath);
         }
 
         String fileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
         Path filePath = uploadPath.resolve(fileName);
-
-        // Sauvegarde du fichier
         Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         return filePath.toString();
     }
 
-    // Récupérer tous les produits
+    // ✅ Récupérer tous les produits
     public List<Produit> getAllProduits() {
-        return produitRepository.findAll(); // Utilise le repository pour récupérer tous les produits
+        return produitRepository.findAll();
     }
 
+    // ✅ Récupérer un produit par ID
     public Optional<Produit> getProduitById(Long id) {
         return produitRepository.findById(id);
     }
-    
-    public Produit updateProduit(Long id, Produit produit) {
-        produit.setId(id);
-        return produitRepository.save(produit);
-    }
 
-    
-    private String storeImage(MultipartFile imageFile) throws IOException {
-        String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-        Path imagePath = Path.of(IMAGE_DIRECTORY, fileName);
-        Files.copy(imageFile.getInputStream(), imagePath, StandardCopyOption.REPLACE_EXISTING);
-        return imagePath.toString();
-    }
-
+    // ✅ Récupérer un produit par nom
     public Optional<Produit> getProduitByNom(String nom) {
         return produitRepository.findByNom(nom);
     }
 
+    // ✅ Produits avec stock bas
     public List<Produit> findLowStockProducts() {
         return produitRepository.findAll().stream()
                 .filter(p -> p.getStock() < 10)
                 .collect(Collectors.toList());
     }
-
-   
 
     @Autowired
     private JavaMailSender mailSender;
@@ -207,6 +233,10 @@ public class ProduitService {
     public List<Produit> getProduitsParCategorie(Categorie categorie) {
         return produitRepository.findByCategorie(categorie);
     }
+    public List<Produit> getProduitsParCategorieId(Long categorieId) {
+        return produitRepository.findByCategorieId(categorieId);
+    }
+
     
     
     

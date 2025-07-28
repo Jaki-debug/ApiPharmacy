@@ -1,12 +1,17 @@
 package com.pharmacie.pharmacie.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+
 @Entity
+@JsonIdentityInfo(
+  generator = ObjectIdGenerators.PropertyGenerator.class,
+  property = "id"
+)
 public class Panier {
 
     @Id
@@ -14,7 +19,6 @@ public class Panier {
     private Long id;
 
     @OneToMany(mappedBy = "panier", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference
     private List<FactureItem> factureItems = new ArrayList<>();
 
     private BigDecimal total = BigDecimal.ZERO;
@@ -24,7 +28,6 @@ public class Panier {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utilisateur_id", unique = true)
-    @JsonBackReference
     private Utilisateur utilisateur;
 
     @OneToMany(mappedBy = "panier", cascade = CascadeType.ALL, orphanRemoval = true)

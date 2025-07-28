@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>17</java.version>
+		<java.version>21</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -117,6 +117,13 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
         
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.15.3</version>
+        </dependency>
+
+        
     
 
 <!-- Spring Messaging (utile pour les WebSockets) -->
@@ -137,6 +144,28 @@
           <groupId>com.fasterxml.jackson.core</groupId>
           <artifactId>jackson-databind</artifactId>
        </dependency>
+       
+    <!-- Selenium -->
+       <dependency>
+          <groupId>org.seleniumhq.selenium</groupId>
+          <artifactId>selenium-java</artifactId>
+          <version>4.21.0</version>
+       </dependency>
+
+    <!-- WebDriver Manager pour gérer ChromeDriver automatiquement -->
+       <dependency>
+         <groupId>io.github.bonigarcia</groupId>
+         <artifactId>webdrivermanager</artifactId>
+         <version>5.8.0</version>
+       </dependency>
+       <dependency>
+         <groupId>org.json</groupId>
+         <artifactId>json</artifactId>
+         <version>20230227</version>
+       </dependency>
+
+
+
 
        
        
@@ -146,6 +175,13 @@
           <version>1.18.30</version>  <!-- Vérifie si c'est la dernière version -->
           <scope>provided</scope>
         </dependency>
+        
+        <dependency>
+          <groupId>org.json</groupId>
+          <artifactId>json</artifactId>
+          <version>20230227</version>
+          </dependency>
+
 
 
 
@@ -159,5 +195,8 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	
+	
     
 </project>

@@ -9,7 +9,8 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nom;  
+    @Column(nullable = false) // ⬅️ nom devient obligatoire
+    private String nom;
 
     public Role() {}
 
@@ -17,7 +18,6 @@ public class Role {
         this.nom = nom;
     }
 
-   
     public Long getId() {
         return id;
     }

@@ -1,7 +1,8 @@
 package com.pharmacie.pharmacie.controller;
 
-import com.pharmacie.pharmacie.dto.UserDTO;
-import com.pharmacie.pharmacie.service.UserService;
+import com.pharmacie.pharmacie.dto.UtilisateurDTO;
+import com.pharmacie.pharmacie.model.Utilisateur;
+import com.pharmacie.pharmacie.service.UtilisateurService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,20 +11,25 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final UserService userService;
+    private final UtilisateurService utilisateurService;
 
-    public AuthController(UserService userService) {
-        this.userService = userService;
+    public AuthController(UtilisateurService utilisateurService) {
+        this.utilisateurService = utilisateurService;
     }
 
-    
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<String> register(@RequestBody UtilisateurDTO utilisateurDTO) {
         try {
-            userService.registerUser(userDTO);
+            // Convertir DTO en entité Utilisateur
+            Utilisateur utilisateur = new Utilisateur();
+            utilisateur.setEmail(utilisateurDTO.getEmail());
+            utilisateur.setMotDePasse(utilisateurDTO.getMotDePasse());
+            utilisateur.setRole(utilisateurDTO.getRole());
+
+            utilisateurService.registerUser(utilisateur);
+
             return ResponseEntity.ok("Inscription réussie !");
         } catch (IllegalArgumentException e) {
-            // retourn une erreur si l'email est déjà pris
             return ResponseEntity.badRequest().body("Erreur : " + e.getMessage());
         }
     }

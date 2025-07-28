@@ -3,8 +3,6 @@ package com.pharmacie.pharmacie.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import java.util.List;
-import java.util.ArrayList;
 
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Évite les erreurs Hibernate
@@ -20,13 +18,12 @@ public class Utilisateur {
     @JsonIgnore // Empêche l'exposition du mot de passe
     private String motDePasse;
 
+    @Column(nullable = false)
+    private String role = "user"; // valeur par défaut
+
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "panier_id")
     private Panier panier;  // Un seul panier pour l'utilisateur
-
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "utilisateur_id")
-    private List<Role> roles = new ArrayList<>();
 
     // 🔹 Constructeurs
     public Utilisateur() {}
@@ -35,13 +32,14 @@ public class Utilisateur {
         this.nom = nom;
         this.email = email;
         this.motDePasse = motDePasse;
+        this.role = "user";
     }
 
-    public Utilisateur(String nom, String email, String motDePasse, List<Role> roles, Panier panier) {
+    public Utilisateur(String nom, String email, String motDePasse, String role, Panier panier) {
         this.nom = nom;
         this.email = email;
         this.motDePasse = motDePasse;
-        this.roles = roles;
+        this.role = (role == null || role.isEmpty()) ? "user" : role;
         this.panier = panier;
     }
 
@@ -78,19 +76,19 @@ public class Utilisateur {
         this.motDePasse = motDePasse;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = (role == null || role.isEmpty()) ? "user" : role;
+    }
+
     public Panier getPanier() {
         return panier;
     }
 
     public void setPanier(Panier panier) {
         this.panier = panier;
-    }
-
-    public List<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<Role> roles) {
-        this.roles = roles;
     }
 }

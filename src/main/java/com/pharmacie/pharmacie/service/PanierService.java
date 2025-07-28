@@ -55,37 +55,17 @@ public class PanierService {
             throw new IllegalArgumentException("Stock insuffisant");
         }
 
-        // Vérification si le produit est déjà dans le panier
-        FactureItem factureItem = panier.getFactureItems().stream()
-                .filter(item -> item.getProduit().getId().equals(produitId))
-                .findFirst()
-                .orElse(null);
+        panier.ajouterProduit(produit, quantite);  // Utilise ta logique propre dans Panier.java
 
-        if (factureItem != null) {
-            // Si le produit est déjà dans le panier, mettre à jour la quantité
-            factureItem.setQuantite(factureItem.getQuantite() + quantite);
-            logger.info("Quantité mise à jour pour produitId = {}. Nouvelle quantité: {}", produitId, factureItem.getQuantite());
-        } else {
-            // Si le produit n'est pas dans le panier, l'ajouter
-            factureItem = new FactureItem(produit, quantite, panier);
-            panier.getFactureItems().add(factureItem);
-            logger.info("Produit ajouté au panier: produitId = {}, quantite = {}", produitId, quantite);
-        }
-
-        // Réduction du stock
         produit.setStock(produit.getStock() - quantite);
-        logger.info("Stock mis à jour pour produitId = {}. Nouveau stock: {}", produitId, produit.getStock());
 
-        // Recalculer le total du panier
-        panier.recalculerTotal();
-        logger.info("Total du panier recalculé: {}", panier.getTotal());
-
-        // Sauvegarde des changements
-        panierRepository.save(panier);
         produitRepository.save(produit);
-        factureItemRepository.save(factureItem);
+        panierRepository.save(panier);
 
         return panier;
+
+
+        
     }
 
     // ✅ Méthode pour récupérer un panier par ID
